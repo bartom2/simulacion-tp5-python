@@ -4,8 +4,8 @@ from random import random
 
 class FinServicioMAp(Evento):
     def __init__():
-        super.__init__("FinServicioMAp")
+        super.__init__("Fin Servicio M Ap")
 
-    def calcularProxEv(self):
+    def calcular_prox_ev(self, reloj):
         rnd = random.random()
-        self.__prox_ev = 20 + (30 - 20) * rnd
+        self.__prox_ev = reloj + 20 + (30 - 20) * rnd

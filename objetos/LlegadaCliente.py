@@ -4,8 +4,8 @@ from random import random
 
 class LlegadaCliente(Evento):
     def __init__():
-        super.__init__("LlegadaCliente")
+        super.__init__("Llegada Cliente")
 
-    def calcularProxEv(self):
+    def calcular_prox_ev(self, reloj):
         rnd = random.random()
-        self.__prox_ev = 2 + (12-2) * rnd
+        self.__prox_ev = reloj + 2 + (12-2) * rnd

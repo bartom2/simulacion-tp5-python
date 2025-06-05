@@ -7,5 +7,5 @@ class Masajista():
     def setEstado(self, estado):
         self.__estado = estado
 
-    def estas(self, cadena):
-        return self.__estado.sosEste(cadena)
+    def estas(self, estado):
+        return self.__estado.sosEste(estado)

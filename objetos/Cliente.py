@@ -1,6 +1,6 @@
 
 class Cliente():
-    def __init__(self, hora_llegada, estado):
+    def __init__(self, estado, hora_llegada):
         self.__nombre = self.asignar_id()
         self.__estado = estado
         self.__hora_llegada = hora_llegada
@@ -14,12 +14,15 @@ class Cliente():
         return 1
 
     def calcular_tiempo_espera(self, estado, hora):
-        for n in ("Atendido Por M A", "Atendido Por M B", "Atendido Por M Ap"):
-            if estado.sosEste(n):
-                self__tiempo_espera = hora - self.__hora_llegada
-                continue
+        if estado.sosCategoria("Atendido"):
+            self.__tiempo_espera = hora - self.__hora_llegada
 
-    def esperasteTreintaMin(self):
+    def estas(self, estado):
+        if self.__estado.sosEste(estado):
+            return True
+        return False
+
+    def tiempo_espera_mayor_treinta(self):
         if self.__tiempo_espera >= 30:
             return True
         return False
