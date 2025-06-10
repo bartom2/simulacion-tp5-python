@@ -35,6 +35,7 @@ class Simulador():
         lim = 10
 
         while x1 <= lim:
+            # hay que cambiarlo para que las constante sean parametros que se puedan ingresar.
             k1 = h * (2*((y1 + 0.5)**2) + 50)
 
             y2 = y1 + k1/2

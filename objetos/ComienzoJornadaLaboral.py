@@ -7,4 +7,5 @@ class ComienzoJornadaLaboral(Evento):
         self.__prox_ev = 0
 
     def calcular_prox_ev(self, reloj):
-        self.__prox_ev = reloj + 0.01
+        # Cambie el comienzoJornadaLaboral a lo ultimo que le preguntamos al profe
+        self.__prox_ev = reloj + 24 * 60
