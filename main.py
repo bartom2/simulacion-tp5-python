@@ -10,7 +10,7 @@ from paginas.PaginaResultados import PaginaResultados
 
 class MainWindow(QWidget):
     def __init__(self):
-        super.__init__()
+        super().__init__()
         self.setWindowTitle("Simulador de Colas de Centro de Masajes Urbanos")
         self.setGeometry(100, 100, 800, 900)
 
@@ -29,20 +29,29 @@ class MainWindow(QWidget):
 
     def elegir_vals(self):
         elegir = PaginaElegirVals(
-            callback_seleccion=self.ir_a_resultados,
+            callback_generado=self.ir_a_resultados,
             callback_volver=self.volver,
             callback_cerrar=self.cerrar_aplicacion,
         )
         self.stack.addWidget(elegir)
         self.stack.setCurrentWidget(elegir)
 
-    def ir_a_resultados(self, x, j, i):
+    def ir_a_resultados(self, dias, j, i, a_c, b_c, a_lc, b_lc, x, a_dc, b_dc, c_dc):
         resultados = PaginaResultados(
             callback_volver=self.volver,
             callback_cerrar=self.cerrar_aplicacion,
-            x=x,
+            dias=dias,
             j=j,
-            i=i)
+            i=i,
+            a_c=a_c,
+            b_c=b_c,
+            a_lc=a_lc,
+            b_lc=b_lc,
+            x=x,
+            a_dc=a_dc,
+            b_dc=b_dc,
+            c_dc=c_dc
+        )
         self.stack.addWidget(resultados)
         self.stack.setCurrentWidget(resultados)
 

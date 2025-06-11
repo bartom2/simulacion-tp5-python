@@ -1,11 +1,14 @@
 
 class Masajista():
     def __init__(self, nombre, estado):
-        self.__nombre = nombre
-        self.__estado = estado
+        self._nombre = nombre
+        self._estado = estado
 
-    def setEstado(self, estado):
-        self.__estado = estado
+    def set_estado(self, estado):
+        self._estado = estado
 
     def estas(self, estado):
-        return self.__estado.sosEste(estado)
+        return self._estado.sos_este(estado)
+
+    def get_nombre_estado(self):
+        return self._estado.get_nombre()

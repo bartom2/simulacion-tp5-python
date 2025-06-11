@@ -5,8 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-from ..core.rungekutta import obtener_func_tension
-from ..core.simulador import simular
+from objetos.Simulador import Simulador
 
 from .PaginaBase import PaginaBase
 
@@ -16,19 +15,43 @@ class PaginaResultados(PaginaBase):
         self,
         callback_volver,
         callback_cerrar,
-        x,
+        dias,
         j,
-        i
+        i,
+        a_c,
+        b_c,
+        a_lc,
+        b_lc,
+        x,
+        a_dc,
+        b_dc,
+        c_dc
     ):
         super().__init__("Resultados", callback_volver, callback_cerrar)
         self.boton_extra.hide()
-        self.x = x
+        self.dias = dias
         self.j = j
         self.i = i
-        self.func_tension = obtener_func_tension()
+        self.a_c = a_c
+        self.b_c = b_c
+        self.a_lc = a_lc
+        self.b_lc = b_lc
+        self.x = x
+        self.a_dc = a_dc
+        self.b_dc = b_dc
+        self.c_dc = c_dc
+
+        simulador = Simulador(self.x, self.a_dc, self.b_dc, self.c_dc)
+        # Aca vamos a tener que sacar los datos para hacer los reportes sobre las consginas pedidas
+        # Faltan hacer la generacion de las tablas
+        # Faltan mostrar lo reportes
+        # Falta poder sacar los reportes de la Simulacion
+        self.iteraciones, self.max_cant_clientes = simulador.simular(
+            self.dias, self.j, self.i, self.a_c, self.b_c, self.a_lc, self.b_lc)
+        self.runge_kutta = simulador.get_iteraciones_runge_kutta()
 
         self.agregar_widget(
-            QLabel(f"<h2>Simulación de {self.x} días de Centro de Masajes Urbanos</h2>"))
+            QLabel(f"<h2>Simulación de {self.dias} días de Centro de Masajes Urbanos</h2>"))
         self.stack = QStackedWidget()
         self.stack.addWidget(self._widget_vectores())
         self.stack.addWidget(self._widget_runge_kutta())
@@ -49,53 +72,48 @@ class PaginaResultados(PaginaBase):
         self.contenedor.addWidget(self.stack)
 
     def _widget_runge_kutta(self):
-        runge_kutta = None
-        return runge_kutta
-
-    def _widget_vectores(self):
-        contenedor = QWidget()
-        layout = QVBoxLayout(contenedor)
-        # Generar datos de tabla
-        vectores_estado, max_clientes_en_intervalo = frecuencias_observadas(
-            self.datos, self.intervalos)
-        # extraer sólo límites para FE
-        limites = [(li, ls) for (li, ls, fo) in datos_interv]
-
-        # Crear tabla con 5 columnas
-        tabla = QTableWidget(len(datos_interv), 5)
+        widget_runge_kutta = QWidget()
+        layout = QVBoxLayout(widget_runge_kutta)
+        tabla = QTableWidget(len(self.runge_kutta), 8)
         tabla.setHorizontalHeaderLabels(
-            ["Intervalo N°", "Límite Inf.", "Límite Sup.", "FO", "FE"]
+            ["x i", "C i", "k1", "k2", "k3", "k4", "x i + 1", "C i + 1"]
         )
-        tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Strech)
 
-        # Calcular FE según distribución
-        total = len(self.datos)
-        if self.distribucion == "Uniforme":
-            params = (self.param_A, self.param_B)
-        elif self.distribucion == "Exponencial Negativa":
-            params = (self.param_lmd,)
-        else:  # "Normal"
-            params = (self.param_media, self.param_desv)
-        fe_list = frecuencias_esperadas(
-            limites, total, self.distribucion, params)
-
-        # Poblar Tabla
-        for i, (li, ls, fo) in enumerate(datos_interv):
-            valores = [
-                i + 1,
-                f"{li:.4f}",
-                f"{ls:.4f}",
-                fo,
-                f"{fe_list[i]:.4f}",
-            ]
-            for j, v in enumerate(valores):
-                item = QTableWidgetItem(str(v))
+        for i, it in enumerate(self.runge_kutta):
+            for j, clave in enumerate(it):
+                item = QTableWidgetItem(f"{it[clave]:.4f}")
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 tabla.setItem(i, j, item)
         layout.addWidget(tabla)
 
-        # Crear Tabla de chi2
-        layout.addLayout(self._crear_seccion_chi2())
+        return layout
+
+    def _widget_vectores(self):
+        contenedor = QWidget()
+        layout = QVBoxLayout(contenedor)
+
+        tabla = QTableWidget(len(self.iteraciones), 26 +
+                             self.max_cant_clientes * 4)
+        cabecera = ["Reloj", "Estado Actual", "C J Tiempo", "C J Prox Ev", "L C RND",
+                    "L C Tiempo", "L C Prox Ev", "RND M", "Masajista Asig", "F J Tiempo",
+                    "F J Prox Ev", "F S M A RND", "F S M A Tension", "F S M A Tiempo",
+                    "F S M A Prox Ev", "F S M B RND", "F S M B Tiempo", "F S M B Prox Ev", "F S M Ap RND", "F S M Ap Tiempo", "F S M Ap Prox Ev", "M A Estado",
+                    "M B Estado", "M Ap Estado", "Cola Max", "Acc Recaudacion"]
+        for _ in range(self.max_cant_clientes):
+            cabecera.extend(["ID", "Estado", "Hora Llegada", "Tiempo Espera"])
+
+        tabla.setHorizontalHeaderLabels(cabecera)
+        tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        for i, vec in enumerate(self.iteraciones):
+            valores = vec.crear_vector()
+
+            for j, v in enumerate(valores):
+                item = QTableWidgetItem(v)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                tabla.setItem(i, j, item)
+        layout.addWidget(tabla)
 
         return contenedor
 
