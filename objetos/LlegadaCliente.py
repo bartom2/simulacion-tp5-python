@@ -10,13 +10,6 @@ class LlegadaCliente(Evento):
         self._a = a_llegada_cliente
         self._b = b_llegada_cliente
 
-    def __str__(self):
-        base = super().__str__()
-        return (f"{base[:-1]}, "  # elimina el último paréntesis de Evento
-                f"rnd2={self._rnd2}, "
-                f"cod_masajista={self._cod_masajista}, "
-                f"a={self._a}, b={self._b})")
-
     def calcular_prox_ev(self, reloj):
         self._rnd = round(random(), 4)
         self._tiempo = round(self._a + (self._b - self._a) * self._rnd, 4)

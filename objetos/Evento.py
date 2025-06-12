@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import traceback
 
 
 class Evento(ABC):
@@ -8,13 +7,6 @@ class Evento(ABC):
         self._prox_ev = None
         self._rnd = None
         self._tiempo = None
-
-    def __str__(self):
-        return (f"{self.__class__.__name__}("
-                f"nombre='{self._nombre}', "
-                f"prox_ev={self._prox_ev}, "
-                f"rnd={self._rnd}, "
-                f"tiempo={self._tiempo})")
 
     @abstractmethod
     def calcular_prox_ev(self, reloj):
