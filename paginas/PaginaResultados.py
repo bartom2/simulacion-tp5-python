@@ -46,12 +46,13 @@ class PaginaResultados(PaginaBase):
         # Faltan hacer la generacion de las tablas
         # Faltan mostrar lo reportes
         # Falta poder sacar los reportes de la Simulacion
-        self.iteraciones, self.max_cant_clientes = simulador.simular(
+        self.iteraciones, self.max_cant_clientes, self.reporte = simulador.simular(
             self.dias, self.j, self.i, self.a_c, self.b_c, self.a_lc, self.b_lc)
+        self.info_simulacion = simulador.cuanto_se_simulo()
         self.runge_kutta = simulador.get_iteraciones_runge_kutta()
 
         self.agregar_widget(
-            QLabel(f"<h2>Simulación de {self.dias} días de Centro de Masajes Urbanos</h2>"))
+            QLabel(f"<h2>Simulación de Centro de Masajes Urbanos</h2>"))
         self.stack = QStackedWidget()
         self.stack.addWidget(self._widget_vectores())
         self.stack.addWidget(self._widget_runge_kutta())
@@ -73,6 +74,11 @@ class PaginaResultados(PaginaBase):
     def _widget_runge_kutta(self):
         contenedor = QWidget()
         layout = QVBoxLayout(contenedor)
+
+        layout.addWidget(QLabel(f"""
+            <h3>Aproximación iterativa de dC/dx = {self.a_dc}*(C(x) + {self.b_dc})^2 + {self.c_dc}</h3>
+        """))
+
         tabla = QTableWidget(len(self.runge_kutta), 8)
         tabla.setHorizontalHeaderLabels(
             ["x i", "C i", "k1", "k2", "k3", "k4", "x i + 1", "C i + 1"]
@@ -92,6 +98,15 @@ class PaginaResultados(PaginaBase):
         contenedor = QWidget()
         layout = QVBoxLayout(contenedor)
 
+        layout.addWidget(QLabel(self.info_simulacion))
+        layout.addWidget(QLabel(f"""
+            <h3>Parametros Seleccionados</h3>
+            <p>La distribucion de tension muscular es U({self.a_c}, {self.b_c}).</p>
+            <p>La distribucion de llegada de los clientes es U({self.a_lc}, {self.b_lc}).</p>
+            <p>Fueron recolectados {self.i} vectores a partir del minuto {self.j}.</p>
+            """))
+        layout.addWidget(QLabel(self.reporte))
+
         tabla = QTableWidget(len(self.iteraciones), 26 +
                              self.max_cant_clientes * 4)
         cabecera = ["Reloj", "Estado Actual", "C J Tiempo", "C J Prox Ev", "L C RND",
@@ -105,10 +120,6 @@ class PaginaResultados(PaginaBase):
 
         tabla.setHorizontalHeaderLabels(cabecera)
 
-        tabla.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
-        tabla.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        tabla.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-
         for i, valores in enumerate(self.iteraciones):
             for j, v in enumerate(valores):
                 item = QTableWidgetItem(v)
@@ -118,6 +129,9 @@ class PaginaResultados(PaginaBase):
 
         tabla.resizeColumnsToContents()
         tabla.resizeRowsToContents()
+        tabla.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
+        tabla.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        tabla.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
         layout.addWidget(tabla)
 

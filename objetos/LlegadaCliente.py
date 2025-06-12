@@ -26,10 +26,21 @@ class LlegadaCliente(Evento):
         return self._cod_masajista
 
     def crear_vector(self):
+        vector = []
         if self._prox_ev is None:
-            return ["", "", "", "", ""]
+            vector = ["", "", "", "", ""]
+        elif self._rnd2 is None:
+            vector = [str(self._rnd), str(self._tiempo),
+                      str(self._prox_ev), "", ""
+                      ]
         else:
-            return [str(self._rnd), str(self._tiempo),
-                    str(self._prox_ev), str(self._rnd2),
-                    str(self._cod_masajista)
-                    ]
+            vector = [str(self._rnd), str(self._tiempo),
+                      str(self._prox_ev), str(self._rnd2),
+                      str(self._cod_masajista)
+                      ]
+        return vector
+
+    def set_prox_ev_none(self):
+        super().set_prox_ev_none()
+        self._rnd2 = None
+        self._cod_masajista = None

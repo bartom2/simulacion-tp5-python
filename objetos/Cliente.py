@@ -25,7 +25,7 @@ class Cliente():
         return False
 
     def tiempo_espera_mayor_treinta(self):
-        if self._tiempo_espera >= 30:
+        if self._tiempo_espera > 30:
             return True
         return False
 

@@ -33,13 +33,8 @@ class VectorEstado():
         self._evento_actual = ""
         self._acc_recaudacion = 0
         self._cant_max_cola = 0
-        self._contador = 0
 
     def simular(self):
-        # if self._contador <= 1:
-        #    for clave in self._eventos:
-        #        print(f"{self._eventos[clave].get_nombre()} prox ev es {
-        #              self._eventos[clave].get_prox_ev()}")
         if self._cant_dias_simulados == self._dias_a_simular:
             return
         evento = self.determinar_prox_ev()
@@ -59,7 +54,6 @@ class VectorEstado():
             fin_jornada.calcular_prox_ev(self._reloj)
 
         elif self._evento_actual == "Fin Jornada Laboral":
-            self._contador += 1
             llegada = self._eventos["L C"]
             llegada.set_prox_ev_none()
 
@@ -76,7 +70,7 @@ class VectorEstado():
                 fin_servicio.calcular_prox_ev(self._reloj)
             else:
                 long_cola = self.determinar_cant_cola()
-                if self._cant_max_cola < self.determinar_cant_cola():
+                if self._cant_max_cola < long_cola:
                     self._cant_max_cola = long_cola
 
         elif self._evento_actual in ("Fin Servicio M A",
@@ -225,7 +219,7 @@ class VectorEstado():
         cant_cola = 0
         for clave in self._clientes:
             for c in self._clientes[clave]:
-                if (not c.esta_blanqueado) and c.haciendo_cola():
+                if (not c.esta_blanqueado()) and c.haciendo_cola():
                     cant_cola += 1
         return cant_cola
 
@@ -245,6 +239,19 @@ class VectorEstado():
         return vec
 
     def finalizo(self):
-        if self._cant_dias_simulados == self._dias_a_simular or self._contador == 1:
+        if self._cant_dias_simulados == self._dias_a_simular:
             return True
         return False
+
+    def crear_reporte(self):
+        if self._cant_dias_simulados > 0:
+            recaudacion_promedio = self._acc_recaudacion / self._cant_dias_simulados
+        else:
+            recaudacion_promedio = self._acc_recaudacion
+
+        reporte = f"""
+            <h3>Reporte</h3>
+            <p>La cantidad mínima de sillas que debe haber para que ningún cliente esté de pie es de {self._cant_max_cola}.</p>
+            <p>La recaudación promedio diaria del centro es de ${recaudacion_promedio}.</p>
+            """
+        return reporte
