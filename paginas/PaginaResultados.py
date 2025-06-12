@@ -99,13 +99,12 @@ class PaginaResultados(PaginaBase):
                     "F J Prox Ev", "F S M A RND", "F S M A Tension", "F S M A Tiempo",
                     "F S M A Prox Ev", "F S M B RND", "F S M B Tiempo", "F S M B Prox Ev", "F S M Ap RND", "F S M Ap Tiempo", "F S M Ap Prox Ev", "M A Estado",
                     "M B Estado", "M Ap Estado", "Cola Max", "Acc Recaudacion"]
-        print("la cantidad maxima ed clientes es", self.max_cant_clientes)
+
         for i in range(self.max_cant_clientes):
             cabecera.extend(["ID", "Estado", "Hora Llegada", "Tiempo Espera"])
-        print(cabecera)
 
         tabla.setHorizontalHeaderLabels(cabecera)
-        # tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
         tabla.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
         tabla.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         tabla.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)

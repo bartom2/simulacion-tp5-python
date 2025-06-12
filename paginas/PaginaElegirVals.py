@@ -37,17 +37,17 @@ class PaginaElegirVals(PaginaBase):
         self.entrada_b_c.setValue(10)
         self.entrada_b_c.setSingleStep(0.01)
         self.entrada_b_c.setRange(0.01, self.MAX_LIM)
-        self.entrada_b_c.valueChanged.connect(self._actualizar_max_a_c)
 
         self.entrada_a_lc = QDoubleSpinBox()
         self.entrada_a_lc.setValue(2)
+        self.entrada_a_lc.setSingleStep(0.01)
         self.entrada_a_lc.setRange(0, self.MAX_LIM)
         self.entrada_a_lc.valueChanged.connect(self._actualizar_min_b_lc)
 
-        self.entrada_b_lc = QSpinBox()
+        self.entrada_b_lc = QDoubleSpinBox()
         self.entrada_b_lc.setValue(12)
+        self.entrada_b_lc.setSingleStep(0.01)
         self.entrada_b_lc.setRange(1, self.MAX_LIM)
-        self.entrada_b_lc.valueChanged.connect(self._actualizar_max_a_lc)
 
         self.entrada_x = QDoubleSpinBox()
         self.entrada_x.setValue(0.01)
@@ -142,28 +142,14 @@ class PaginaElegirVals(PaginaBase):
 
     def _actualizar_min_b_c(self):
         """Cuando cambia A, B debe ser ≥ A + 1."""
-        nuevo_min = self.entrada_a_c.value() + 1
+        nuevo_min = self.entrada_a_c.value() + 0.01
         self.entrada_b_c.setMinimum(nuevo_min)
         if self.entrada_b_c.value() < nuevo_min:
             self.entrada_b_c.setValue(nuevo_min)
 
-    def _actualizar_max_a_c(self):
-        """Cuando cambia B, A debe ser ≤ B - 1."""
-        nuevo_max = self.entrada_b_c.value() - 1
-        self.entrada_a_c.setMaximum(nuevo_max)
-        if self.entrada_a_c.value() > nuevo_max:
-            self.entrada_a_c.setValue(nuevo_max)
-
     def _actualizar_min_b_lc(self):
         """Cuando cambia A, B debe ser ≥ A + 1."""
-        nuevo_min = self.entrada_a_lc.value() + 1
+        nuevo_min = self.entrada_a_lc.value() + 0.01
         self.entrada_b_lc.setMinimum(nuevo_min)
         if self.entrada_b_lc.value() < nuevo_min:
             self.entrada_b_lc.setValue(nuevo_min)
-
-    def _actualizar_max_a_lc(self):
-        """Cuando cambia B, A debe ser ≤ B - 1."""
-        nuevo_max = self.entrada_b_lc.value() - 1
-        self.entrada_a_lc.setMaximum(nuevo_max)
-        if self.entrada_a_lc.value() > nuevo_max:
-            self.entrada_a_lc.setValue(nuevo_max)
