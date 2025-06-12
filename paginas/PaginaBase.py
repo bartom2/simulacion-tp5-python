@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QApplication
 from core.utilidades import aplicar_estilo
 
+
 class PaginaBase(QWidget):
     def __init__(self, titulo=None, callback_volver=None, callback_cerrar=None):
         super().__init__()

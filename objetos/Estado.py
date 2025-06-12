@@ -1,15 +1,19 @@
 
 class Estado():
     def __init__(self, nombre, categoria):
-        self.__nombre = nombre
-        self.__categoria = categoria
+        self._nombre = nombre
+        self._categoria = categoria
 
-    def sosEste(self, estado):
+    def sos_este(self, estado):
         if self == estado:
             return True
         return False
 
-    def sosCategoria(self, cadena):
-        if self.__categoria == cadena:
+    def sos_categoria(self, cadena):
+        if self._categoria == cadena:
             return True
-        return False
+        else:
+            return False
+
+    def get_nombre(self):
+        return self._nombre

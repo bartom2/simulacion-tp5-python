@@ -7,7 +7,6 @@ from objetos.Cliente import Cliente
 from objetos.Masajista import Masajista
 from objetos.FinJornadaLaboral import FinJornadaLaboral
 from objetos.ComienzoJornadaLaboral import ComienzoJornadaLaboral
-from objetos.FinSimulacion import FinSimulacion
 
 # Hay que cambiar la implementación de los Clientes para que los objetos se
 # reutilicen. Y que estos nos muevan de posición sino que solo se agregan
@@ -19,108 +18,86 @@ from objetos.FinSimulacion import FinSimulacion
 
 
 class VectorEstado():
-    def __init__(self, func_tension, x, j, i):
-        self.__reloj = 0
-        self.__eventos = [ComienzoJornadaLaboral, FinJornadaLaboral,
-                          LlegadaCliente, FinServicioMA(func_tension),
-                          FinServicioMB, FinServicioMAp,
-                          FinSimulacion]
-        self.__estados_cliente, self.__estados_masajistas = self.inicializar_estados()
-        self.__masajistas = self.inicializar_masajistas
-        self.__precio_masajistas = {"M A": 3500, "M B": 3500, "M Ap": 1800}
-        self.__clientes = []
-        self.__x = x
-        self.__cant_dias_simulados = 0
-        self.__evento_actual = ""
-        self.__acc_recaudacion = 0
-        self.__cant_max_cola = 0
-
-    def guardar(self, j):
-        if self.__reloj >= j:
-            return True
-        return False
+    def __init__(self, func_tension, dias, j, i, a_c, b_c, a_llegada_cliente, b_llegada_cliente):
+        self._reloj = 0
+        self._eventos = {"C J": ComienzoJornadaLaboral(), "L C": LlegadaCliente(a_llegada_cliente, b_llegada_cliente),
+                         "F J": FinJornadaLaboral(), "F M A": FinServicioMA(
+            a_c, b_c, func_tension),
+            "F M B": FinServicioMB(), "F M Ap": FinServicioMAp()}
+        self._estados_cliente, self._estados_masajistas = self.inicializar_estados()
+        self._masajistas = self.inicializar_masajistas()
+        self._precio_masajistas = {"M A": 3500, "M B": 3500, "M Ap": 1800}
+        self._clientes = {"M A":  [], "M B":  [], "M Ap": []}
+        self._dias_a_simular = dias
+        self._cant_dias_simulados = 0
+        self._evento_actual = ""
+        self._acc_recaudacion = 0
+        self._cant_max_cola = 0
 
     def simular(self):
-        if self.__cant_dias_simulados == self.__x:
+        if self._cant_dias_simulados == self._dias_a_simular:
             return
-        evento = self.__eventos.pop(0)
-        self.__reloj = evento.get_prox_ev()
-        self.__evento_actual = evento.get_nombre()
+        evento = self.determinar_prox_ev()
+        self._reloj = evento.get_prox_ev()
+        self._evento_actual = evento.get_nombre()
+        # print("El evento actual es ", self._evento_actual)
+        if self._evento_actual not in ("Fin Servicio M A",
+                                       "Fin Servicio M B",
+                                       "Fin Servicio M Ap"):
+            evento.calcular_prox_ev(self._reloj)
         # Tengo que tomar en cuenta cuando un evento se cancela y cuando un
         # evento vuelve a necesitar calcular su tiempo
-        if self.__evento_actual == "Comienzo Jornada Laboral":
-            if self.__reloj != 0:
-                self.__cant_dias_simulados += 1
-            evento.set_prox_ev_none()
-            llegada = self.encontrar("Llegada Cliente")
-            llegada.calcular_prox_ev()
-            fin_jornada = self.encontrar("Fin Jornada Laboral")
-            fin_jornada.calcular_prox_ev(self.__reloj)
-            self.add_ev_in_order(llegada)
-            self.add_ev_in_order(fin_jornada)
+        if self._evento_actual == "Comienzo Jornada Laboral":
+            llegada = self._eventos["L C"]
+            llegada.calcular_prox_ev(self._reloj)
+            fin_jornada = self._eventos["F J"]
+            fin_jornada.calcular_prox_ev(self._reloj)
 
-        elif self.__evento_actual == "Fin Jornada Laboral":
-            llegada = self.encontrar("Llegada Cliente")
+        elif self._evento_actual == "Fin Jornada Laboral":
+            llegada = self._eventos["L C"]
             llegada.set_prox_ev_none()
-            self.add_ev_in_order(llegada)
 
-        elif self.__evento_actual == "Llegada Cliente":
-            evento.calcular_prox_ev(self.__reloj)
-            cod_masajista = self.cod_masajista_disponible()
-            self.nuevo_cliente(cod_masajista, self.__reloj)
+        elif self._evento_actual == "Llegada Cliente":
+            cod_masajista = evento.asignar_masajista()
+            ocupado = self._masajistas[cod_masajista].estas(
+                self._estados_masajistas["O"])
+            self.nuevo_cliente(cod_masajista, ocupado, self._reloj)
 
-            if cod_masajista != "":
-                self.__masajistas[cod_masajista].setEstado(
-                    self.__estados_masajistas["O"])
-                fin_servicio = self.encontrar(f"Fin Servicio {cod_masajista}")
-                fin_servicio.calcular_prox_ev(self.__reloj)
-                self.add_ev_in_order(fin_servicio)
+            if not ocupado:
+                self._masajistas[cod_masajista].set_estado(
+                    self._estados_masajistas["O"])
+                fin_servicio = self._eventos[f"F {cod_masajista}"]
+                fin_servicio.calcular_prox_ev(self._reloj)
             else:
-                nuevo_cliente = Cliente(
-                    self.__estados_cliente["C"], self.__reloj)
+                long_cola = self.determinar_cant_cola()
+                if self._cant_max_cola < long_cola:
+                    self._cant_max_cola = long_cola
 
-            self.__clientes.add(nuevo_cliente)
-
-            if self.__cant_max_cola < len(self.__clientes):
-                self.__cant_max_cola = len(self.__clientes)
-
-        elif self.__evento_actual in ("Fin Servicio M A",
-                                      "Fin Servicio M B", "Fin Servicio M Ap"):
-            cod = self.__evento_actual[12:]
-            self.cobrar_cliente(f"Atendido Por {cod}")
+        elif self._evento_actual in ("Fin Servicio M A",
+                                     "Fin Servicio M B", "Fin Servicio M Ap"):
+            cod = self._evento_actual[13:]
+            # Cambiar funcion cobrar_cliente para que sea en funcion al codgo o la categoria
+            self.cobrar_cliente(cod)
             if not self.llamar_sig_cliente(cod):
-                self.__masajistas[cod].setEstado(
-                    self.__estados_masajistas["L"])
+                self._masajistas[cod].set_estado(
+                    self._estados_masajistas["L"])
                 evento.set_prox_ev_none()
+                if self.todos_masajistas_desocupados() and self.colas_vacias() and self.es_prox_ev_none("Llegada Cliente"):
+                    self._cant_dias_simulados += 1
             else:
-                evento.calcular_prox_ev(self.__reloj)
+                evento.calcular_prox_ev(self._reloj)
 
-            if self.es_prox_ev_none("Llegada Cliente") and self.todos_masajistas_desocupados():
-                if self.__cant_dias_simulados == self.__x:
-                    fin_sim = self.encontrar("Fin Simulación")
-                    fin_sim.calcular_prox_ev(self.__reloj)
-                    self.add_ev_in_order(fin_sim)
-                else:
-                    comienzo = self.encontrar("Comienzo Jornada Laboral")
-                    comienzo.calcular_prox_ev(self.__reloj)
-                    self.add_ev_in_order(comienzo)
-
-        else:
-            self.__evento_actual = evento.get_nombre()
-
-        # Tengo que chequear que esta linea de codigo quede bien
-        self.add_ev_in_order(evento)
-
-    @staticmethod
-    def inicializar_estados():
+    def inicializar_estados(self):
         estados_cliente = {}
         estados_masajistas = {}
 
         for name, handler, categoria in [
-            ("En Cola", "C", "Cola"),
-            ("Atendido Por M A", "M A", "Atendido"),
-            ("Atendido Por M B", "M B", "Atendido"),
-            ("Atendido Por M Ap", "M Ap", "Atendido")
+            ("Esperando M A", "E M A", "Esperando"),
+            ("Esperando M B", "E M B", "Esperando"),
+            ("Esperando M Ap", "E M Ap", "Esperando"),
+            ("Atendido Por M A", "A M A", "Atendido"),
+            ("Atendido Por M B", "A M B", "Atendido"),
+            ("Atendido Por M Ap", "A M Ap", "Atendido")
         ]:
             estado = Estado(name, categoria)
             estados_cliente[handler] = estado
@@ -134,8 +111,7 @@ class VectorEstado():
 
         return estados_cliente, estados_masajistas
 
-    @staticmethod
-    def inicializar_masajistas():
+    def inicializar_masajistas(self):
         masajistas = {}
 
         for name, handler in [
@@ -143,102 +119,139 @@ class VectorEstado():
             ("Masajita B", "M B"),
             ("Masajista Ap", "M Ap")
         ]:
-            masajista = Masajista(name)
+            masajista = Masajista(name, self._estados_masajistas["L"])
             masajistas[handler] = masajista
 
         return masajistas
 
-    def encontrar(self, cadena):
-        for ev in self.__eventos:
-            if ev.es_tu_nombre(cadena):
-                self.__eventos.remove(ev)
-                return ev
-
-    def add_ev_in_order(self, evento):
-        # add in order binario en función del valor de prox_ev
-        if evento.get_prox_ev() is None:
-            self.__eventos.append(evento)
-            return
-
-        izquierda = 0
-        derecha = len(self.__eventos)
-
-        while izquierda < derecha:
-            medio = (izquierda + derecha) // 2
-            medio_tiempo = self.__eventos[medio].get_prox_ev()
-
-            if medio_tiempo is None:
-                derecha = medio
-            elif medio_tiempo < evento.get_prox_ev():
-                izquierda = medio + 1
-            else:
-                derecha = medio
-
-        self.__eventos.insert(izquierda, evento)
-
     def cod_masajista_disponible(self):
         for codigo in ["M A", "M B", "M Ap"]:
-            if self.__masajistas[codigo].estas(self.__estados_masajistas["L"]):
+            if self._masajistas[codigo].estas(self._estados_masajistas["L"]):
                 return codigo
         return ""
 
-    def get_longitud_cola(self):
-        return len(self.__clientes)
+    def determinar_cant_clientes_vecs(self):
+        return len(self._clientes["M A"]) + len(self._clientes["M B"]) + len(self._clientes["M Ap"])
 
     def cola_es_mayor(self, n):
-        if len(self.__clientes) > n:
+        if len(self._clientes) > n:
             return True
         return False
 
-    def nuevo_cliente(self, cod_masajista, hora):
-        for c in self.__clientes:
+    def nuevo_cliente(self, cod_masajista, ocupado, hora):
+        for c in self._clientes[cod_masajista]:
             if c.esta_fuera_del_sistema():
-                if cod_masajista == "":
-                    c.reutilizar(self.__estados_cliente["C"], hora)
+                if ocupado:
+                    c.reutilizar(
+                        self._estados_cliente[f"E {cod_masajista}"], hora)
                 else:
-                    c.reutilizar(self.__estados_cliente[cod_masajista], hora)
+                    c.reutilizar(
+                        self._estados_cliente[f"A {cod_masajista}"], hora)
                 return
-        if cod_masajista == "":
-            nuevo_cliente = Cliente(self.__estados_cliente["C"], hora)
+        if ocupado:
+            nuevo_cliente = Cliente(
+                self._estados_cliente[f"E {cod_masajista}"], hora)
         else:
             nuevo_cliente = Cliente(
-                self.__estados_cliente[cod_masajista], hora)
+                self._estados_cliente[f"A {cod_masajista}"], hora)
 
-        self.__clientes.add(nuevo_cliente)
+        self._clientes[cod_masajista].append(nuevo_cliente)
 
     # Aca voy a tener el estado literal del cliente
     def cobrar_cliente(self, codigo_masajista):
         acc_gasto = 0
-        for c in self.__clientes:
-            if c.estas(self.__estados_cliente[codigo_masajista]):
+        for c in self._clientes[codigo_masajista]:
+            if (not c.esta_blanqueado()) and c.estas(self._estados_cliente[f"A {codigo_masajista}"]):
                 if c.tiempo_espera_mayor_treinta():
                     acc_gasto += 1500
 
-                acc_gasto += self.__precio_masajistas[codigo_masajista]
-                self.__acc_recaudacion += acc_gasto
-                self.__clientes.remove(c)
+                acc_gasto += self._precio_masajistas[codigo_masajista]
+                self._acc_recaudacion += acc_gasto
+                c.blanquear()
                 break
 
     def llamar_sig_cliente(self, codigo_masajista):
-        for c in self.__clientes:
-            if c.estas(self.__estados_cliente["C"]):
+        for c in self._clientes[codigo_masajista]:
+            if (not c.esta_blanqueado()) and c.estas(self._estados_cliente[f"E {codigo_masajista}"]):
                 c.setEstado(
-                    self.__estados_cliente[codigo_masajista], self.__reloj)
+                    self._estados_cliente[f"A {codigo_masajista}"], self._reloj)
                 return True
         return False
 
     def es_prox_ev_none(self, nombre_ev):
-        for ev in self.__eventos:
-            if ev.es_tu_nombre(nombre_ev):
-                return ev.es_prox_ev_none()
+        for clave in self._eventos:
+            if self._eventos[clave].es_tu_nombre(nombre_ev):
+                return self._eventos[clave].es_prox_ev_none()
 
     def todos_masajistas_desocupados(self):
         for codigo in ["M A", "M B", "M Ap"]:
-            if self.__masajistas[codigo].estas(self.__estados_masajistas["O"]):
+            if self._masajistas[codigo].estas(self._estados_masajistas["O"]):
                 return False
         return True
 
     def guardar(self, j):
-        if self.__reloj >= j:
+        if self._reloj >= j:
             return True
         return False
+
+    def determinar_prox_ev(self):
+        prox_ev = None
+        c_e = None
+        for clave in self._eventos:
+            if self._eventos[clave].get_prox_ev() is None:
+                continue
+            if prox_ev is None:
+                prox_ev = self._eventos[clave].get_prox_ev()
+                c_e = clave
+            if self._eventos[clave].get_prox_ev() < prox_ev:
+                prox_ev = self._eventos[clave].get_prox_ev()
+                c_e = clave
+        return self._eventos[c_e]
+
+    def colas_vacias(self):
+        for clave in self._clientes:
+            for c in self._clientes[clave]:
+                if (not c.esta_blanqueado) and c.haciendo_cola():
+                    return False
+        return True
+
+    def determinar_cant_cola(self):
+        cant_cola = 0
+        for clave in self._clientes:
+            for c in self._clientes[clave]:
+                if (not c.esta_blanqueado()) and c.haciendo_cola():
+                    cant_cola += 1
+        return cant_cola
+
+    def crear_vector(self):
+        vec = [str(self._reloj), self._evento_actual]
+        for clave in self._eventos:
+            vec.extend(self._eventos[clave].crear_vector())
+
+        for clave in self._masajistas:
+            vec.append(self._masajistas[clave].get_nombre_estado())
+
+        vec.extend([str(self._cant_max_cola), str(self._acc_recaudacion)])
+
+        for clave in self._clientes:
+            for c in self._clientes[clave]:
+                vec.extend(c.crear_vector())
+        return vec
+
+    def finalizo(self):
+        if self._cant_dias_simulados == self._dias_a_simular:
+            return True
+        return False
+
+    def crear_reporte(self):
+        if self._cant_dias_simulados > 0:
+            recaudacion_promedio = self._acc_recaudacion / self._cant_dias_simulados
+        else:
+            recaudacion_promedio = self._acc_recaudacion
+
+        reporte = f"""
+            <h3>Reporte</h3>
+            <p>La cantidad mínima de sillas que debe haber para que ningún cliente esté de pie es de {self._cant_max_cola}.</p>
+            <p>La recaudación promedio diaria del centro es de ${recaudacion_promedio}.</p>
+            """
+        return reporte
