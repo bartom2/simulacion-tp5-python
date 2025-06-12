@@ -17,7 +17,7 @@ class Cliente():
 
     def calcular_tiempo_espera(self, estado, hora):
         if estado.sos_categoria("Atendido"):
-            self._tiempo_espera = hora - self._hora_llegada
+            self._tiempo_espera = round(hora - self._hora_llegada, 4)
 
     def estas(self, estado):
         if self._estado.sos_este(estado):
@@ -53,3 +53,8 @@ class Cliente():
             return ["", "", "", ""]
         else:
             return [str(self._id), self._estado.get_nombre(), str(self._hora_llegada), str(self._tiempo_espera)]
+
+    def esta_blanqueado(self):
+        if self._id is None:
+            return True
+        return False

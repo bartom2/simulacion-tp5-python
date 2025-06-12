@@ -12,14 +12,14 @@ class FinServicioMA(Evento):
         self._c = None
 
     def calcular_prox_ev(self, reloj):
-        self._rnd = random()
-        self._c = self._a + (self._b - self._a) * self._rnd
-        self._tiempo = self._func_demora(min(self._func_demora.keys(),
-                                             key=lambda k: abs(k - self._c)))
-        self._prox_ev = reloj + self._tiempo
+        self._rnd = round(random(), 4)
+        self._c = round(self._a + (self._b - self._a) * self._rnd, 4)
+        self._tiempo = round(self._func_demora[min(self._func_demora.keys(),
+                                                   key=lambda k: abs(k - self._c))], 4)
+        self._prox_ev = round(reloj + self._tiempo, 4)
 
     def set_prox_ev_none(self):
-        super.set_prox_ev_none()
+        super().set_prox_ev_none()
         self._c = None
 
     def crear_vector(self):

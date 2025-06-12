@@ -12,9 +12,9 @@ class PaginaElegirVals(PaginaBase):
 
         # Falta verificar los rangos de estas variables
         self.entrada_tiempo_sim = QDoubleSpinBox()
-        self.entrada_tiempo_sim.setDecimals(2)
+        self.entrada_tiempo_sim.setDecimals(1)
         self.entrada_tiempo_sim.setSingleStep(0.01)
-        self.entrada_tiempo_sim.setValue(0)
+        self.entrada_tiempo_sim.setValue(2)
         self.entrada_tiempo_sim.setRange(0, self.MAX_LIM)
 
         self.entrada_j = QDoubleSpinBox()
@@ -24,7 +24,7 @@ class PaginaElegirVals(PaginaBase):
         self.entrada_j.setRange(0, self.MAX_LIM)
 
         self.entrada_i = QSpinBox()
-        self.entrada_i.setValue(1)
+        self.entrada_i.setValue(10)
         self.entrada_i.setRange(1, 100000)
 
         self.entrada_a_c = QDoubleSpinBox()

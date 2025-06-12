@@ -10,17 +10,24 @@ class LlegadaCliente(Evento):
         self._a = a_llegada_cliente
         self._b = b_llegada_cliente
 
+    def __str__(self):
+        base = super().__str__()
+        return (f"{base[:-1]}, "  # elimina el último paréntesis de Evento
+                f"rnd2={self._rnd2}, "
+                f"cod_masajista={self._cod_masajista}, "
+                f"a={self._a}, b={self._b})")
+
     def calcular_prox_ev(self, reloj):
-        self._rnd = random()
-        self._tiempo = self._a + (self._b - self._a) * self._rnd
-        self._prox_ev = reloj + self._tiempo
+        self._rnd = round(random(), 4)
+        self._tiempo = round(self._a + (self._b - self._a) * self._rnd, 4)
+        self._prox_ev = round(reloj + self._tiempo, 4)
 
     def asignar_masajista(self):
-        self._rnd2 = random()
+        self._rnd2 = round(random(), 4)
         if 0 <= self._rnd2 <= 0.44:
             self._cod_masajista = "M A"
-        elif 0.45 <= self._rnd <= 0.84:
-            self._cod_masajsta = "M B"
+        elif 0.45 <= self._rnd2 <= 0.84:
+            self._cod_masajista = "M B"
         else:
             self._cod_masajista = "M Ap"
         return self._cod_masajista

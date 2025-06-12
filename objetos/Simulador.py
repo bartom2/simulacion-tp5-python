@@ -10,16 +10,18 @@ class Simulador():
         self._vector_estado = VectorEstado(
             self._func_tension, dias, j, i, a_c, b_c, a_llegada_cliente, b_llegada_cliente)
 
-        max_cola_clientes = 0
         vectores_guardados = []
+        iteraciones = 0
 
-        while not self._vector_estado.finalizo():
+        while not self._vector_estado.finalizo() and iteraciones < 100000:
             self._vector_estado.simular()
+            iteraciones += 1
 
-            if self._vector_estado.guardar(j) and len(self._vectores_guardados) < i:
-                self._vectores_guardados.append(self._vector_estado)
+            if self._vector_estado.guardar(j) and len(vectores_guardados) < i:
+                vectores_guardados.append(self._vector_estado.crear_vector())
 
-        max_cola_clentes = self._vector_estado.determinar_cant_clientes_vecs()
+        max_cola_clientes = self._vector_estado.determinar_cant_clientes_vecs()
+        print("---------------------------------")
 
         return vectores_guardados, max_cola_clientes
 
@@ -48,7 +50,6 @@ class Simulador():
 
             y4 = y1 + k3
             k4 = h * (a*((y4 + b)**2) + c)
-            print(f"y4={y4}, b={b}, y4 + b={(y4 + b)}, cuadrado={(y4 + b)**2}")
 
             yn1 = y1 + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
             xn1 = x1 + h

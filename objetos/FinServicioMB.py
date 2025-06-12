@@ -7,9 +7,9 @@ class FinServicioMB(Evento):
         super().__init__("Fin Servicio M B")
 
     def calcular_prox_ev(self, reloj):
-        self._rnd = random()
-        self._tiempo = 12 + (18 - 12) * self._rnd
-        self._prox_ev = reloj + self._tiempo
+        self._rnd = round(random(), 4)
+        self._tiempo = round(12 + (18 - 12) * self._rnd, 4)
+        self._prox_ev = round(reloj + self._tiempo, 4)
 
     def crear_vector(self):
         if self._prox_ev is None:

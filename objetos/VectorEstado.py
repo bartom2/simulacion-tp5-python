@@ -33,13 +33,19 @@ class VectorEstado():
         self._evento_actual = ""
         self._acc_recaudacion = 0
         self._cant_max_cola = 0
+        self._contador = 0
 
     def simular(self):
+        # if self._contador <= 1:
+        #    for clave in self._eventos:
+        #        print(f"{self._eventos[clave].get_nombre()} prox ev es {
+        #              self._eventos[clave].get_prox_ev()}")
         if self._cant_dias_simulados == self._dias_a_simular:
             return
         evento = self.determinar_prox_ev()
         self._reloj = evento.get_prox_ev()
         self._evento_actual = evento.get_nombre()
+        # print("El evento actual es ", self._evento_actual)
         if self._evento_actual not in ("Fin Servicio M A",
                                        "Fin Servicio M B",
                                        "Fin Servicio M Ap"):
@@ -47,11 +53,13 @@ class VectorEstado():
         # Tengo que tomar en cuenta cuando un evento se cancela y cuando un
         # evento vuelve a necesitar calcular su tiempo
         if self._evento_actual == "Comienzo Jornada Laboral":
-            evento.set_prox_ev_none()
             llegada = self._eventos["L C"]
             llegada.calcular_prox_ev(self._reloj)
+            fin_jornada = self._eventos["F J"]
+            fin_jornada.calcular_prox_ev(self._reloj)
 
         elif self._evento_actual == "Fin Jornada Laboral":
+            self._contador += 1
             llegada = self._eventos["L C"]
             llegada.set_prox_ev_none()
 
@@ -73,7 +81,7 @@ class VectorEstado():
 
         elif self._evento_actual in ("Fin Servicio M A",
                                      "Fin Servicio M B", "Fin Servicio M Ap"):
-            cod = self._evento_actual[12:]
+            cod = self._evento_actual[13:]
             # Cambiar funcion cobrar_cliente para que sea en funcion al codgo o la categoria
             self.cobrar_cliente(cod)
             if not self.llamar_sig_cliente(cod):
@@ -159,7 +167,7 @@ class VectorEstado():
     def cobrar_cliente(self, codigo_masajista):
         acc_gasto = 0
         for c in self._clientes[codigo_masajista]:
-            if c.estas(self._estados_cliente[f"A {codigo_masajista}"]):
+            if (not c.esta_blanqueado()) and c.estas(self._estados_cliente[f"A {codigo_masajista}"]):
                 if c.tiempo_espera_mayor_treinta():
                     acc_gasto += 1500
 
@@ -170,16 +178,16 @@ class VectorEstado():
 
     def llamar_sig_cliente(self, codigo_masajista):
         for c in self._clientes[codigo_masajista]:
-            if c.estas(self._estados_cliente[f"E {codigo_masajista}"]):
+            if (not c.esta_blanqueado()) and c.estas(self._estados_cliente[f"E {codigo_masajista}"]):
                 c.setEstado(
                     self._estados_cliente[f"A {codigo_masajista}"], self._reloj)
                 return True
         return False
 
     def es_prox_ev_none(self, nombre_ev):
-        for ev in self._eventos:
-            if ev.es_tu_nombre(nombre_ev):
-                return ev.es_prox_ev_none()
+        for clave in self._eventos:
+            if self._eventos[clave].es_tu_nombre(nombre_ev):
+                return self._eventos[clave].es_prox_ev_none()
 
     def todos_masajistas_desocupados(self):
         for codigo in ["M A", "M B", "M Ap"]:
@@ -196,12 +204,9 @@ class VectorEstado():
         prox_ev = None
         c_e = None
         for clave in self._eventos:
-            print(f"nombre: {self._eventos[clave].get_nombre()} prox_ev: {
-                  self._eventos[clave].get_prox_ev()} ")
             if self._eventos[clave].get_prox_ev() is None:
                 continue
             if prox_ev is None:
-                # print(type(self._eventos[clave]))
                 prox_ev = self._eventos[clave].get_prox_ev()
                 c_e = clave
             if self._eventos[clave].get_prox_ev() < prox_ev:
@@ -210,17 +215,17 @@ class VectorEstado():
         return self._eventos[c_e]
 
     def colas_vacias(self):
-        for clave in self._colas:
-            for c in self._colas[clave]:
-                if c.haciendo_cola():
+        for clave in self._clientes:
+            for c in self._clientes[clave]:
+                if (not c.esta_blanqueado) and c.haciendo_cola():
                     return False
         return True
 
     def determinar_cant_cola(self):
         cant_cola = 0
-        for clave in self._colas:
-            for c in self._colas[clave]:
-                if c.haciendo_cola():
+        for clave in self._clientes:
+            for c in self._clientes[clave]:
+                if (not c.esta_blanqueado) and c.haciendo_cola():
                     cant_cola += 1
         return cant_cola
 
@@ -240,6 +245,6 @@ class VectorEstado():
         return vec
 
     def finalizo(self):
-        if self._cant_dias_simulados == self._dias_a_simular:
+        if self._cant_dias_simulados == self._dias_a_simular or self._contador == 1:
             return True
         return False

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
     QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QWidget, QHeaderView,
-    QComboBox
+    QAbstractScrollArea
 )
 from PyQt5.QtCore import Qt
 
@@ -68,17 +68,16 @@ class PaginaResultados(PaginaBase):
         self.contenedor.addLayout(botones)
 
         # Navegación interna de serie
-        self._crear_controles_serie()
         self.contenedor.addWidget(self.stack)
 
     def _widget_runge_kutta(self):
-        widget_runge_kutta = QWidget()
-        layout = QVBoxLayout(widget_runge_kutta)
+        contenedor = QWidget()
+        layout = QVBoxLayout(contenedor)
         tabla = QTableWidget(len(self.runge_kutta), 8)
         tabla.setHorizontalHeaderLabels(
             ["x i", "C i", "k1", "k2", "k3", "k4", "x i + 1", "C i + 1"]
         )
-        tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Strech)
+        tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         for i, it in enumerate(self.runge_kutta):
             for j, clave in enumerate(it):
@@ -87,7 +86,7 @@ class PaginaResultados(PaginaBase):
                 tabla.setItem(i, j, item)
         layout.addWidget(tabla)
 
-        return layout
+        return contenedor
 
     def _widget_vectores(self):
         contenedor = QWidget()
@@ -100,19 +99,27 @@ class PaginaResultados(PaginaBase):
                     "F J Prox Ev", "F S M A RND", "F S M A Tension", "F S M A Tiempo",
                     "F S M A Prox Ev", "F S M B RND", "F S M B Tiempo", "F S M B Prox Ev", "F S M Ap RND", "F S M Ap Tiempo", "F S M Ap Prox Ev", "M A Estado",
                     "M B Estado", "M Ap Estado", "Cola Max", "Acc Recaudacion"]
-        for _ in range(self.max_cant_clientes):
+        print("la cantidad maxima ed clientes es", self.max_cant_clientes)
+        for i in range(self.max_cant_clientes):
             cabecera.extend(["ID", "Estado", "Hora Llegada", "Tiempo Espera"])
+        print(cabecera)
 
         tabla.setHorizontalHeaderLabels(cabecera)
-        tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        tabla.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
+        tabla.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        tabla.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
-        for i, vec in enumerate(self.iteraciones):
-            valores = vec.crear_vector()
-
+        for i, valores in enumerate(self.iteraciones):
             for j, v in enumerate(valores):
                 item = QTableWidgetItem(v)
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                item.setToolTip(item.text())
                 tabla.setItem(i, j, item)
+
+        tabla.resizeColumnsToContents()
+        tabla.resizeRowsToContents()
+
         layout.addWidget(tabla)
 
         return contenedor
@@ -120,8 +127,6 @@ class PaginaResultados(PaginaBase):
     # Vistas
     def mostrar_vectores(self):
         self.stack.setCurrentIndex(0)
-        self.nav.hide()
 
     def mostrar_runge_kutta(self):
         self.stack.setCurrentIndex(1)
-        self.nav.hide()

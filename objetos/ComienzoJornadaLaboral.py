@@ -11,7 +11,4 @@ class ComienzoJornadaLaboral(Evento):
         self._prox_ev = reloj + self._tiempo
 
     def crear_vector(self):
-        if self._prox_ev is None:
-            return ["", ""]
-        else:
-            return [str(self._tiempo), str(self._prox_ev)]
+        return [str(self._tiempo), str(self._prox_ev)]
